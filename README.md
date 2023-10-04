@@ -187,8 +187,7 @@ admin.site.register(Comment)
 				</button>
 				<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
 					<div class="navbar-nav">
-						<a class="nav-link active" href="/">Profile</a>
-						<a class="nav-link active" href="/">My Posts</a>
+                        <a class="nav-link" href="/logout">Logout</a>
 					</div>
 				</div>
 				{% endif %}
@@ -221,7 +220,7 @@ admin.site.register(Comment)
     {% if isLogin %}
     <div class="card card-create-post m-4 p-3 position-relative">
         <div class="card-header mb-3">
-            <h5> Welcome {{ username }} user!</h5>
+            <h5> Welcome {{ username }} !</h5>
         </div>
         <div>
             <div class="mb-3">
@@ -363,6 +362,7 @@ urlpatterns = [
 
 - Create dummy posts on supabase and you will see the following page
 
+![Index Page Preview](assets/index_page_preview_logout.png)
 ![Index Page Preview](assets/index_page_preview.png)
 
 
@@ -396,7 +396,7 @@ urlpatterns = [
 
 ```py
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 
 class SignupForm(UserCreationForm):
@@ -486,6 +486,49 @@ urlpatterns = [
 
 - `templates/login.html`
 
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Login Page 
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid h-100">
+  <div class="row h-100 justify-content-center align-items-center">
+    <div class="col-md-6 my-auto">
+      <form method="POST" action="" class="card mt-5">
+        {% csrf_token %}
+        <div class="card-header">
+          <h3>Login</h3>
+        </div>
+        <div class="card-body d-flex flex-column gap-3">
+          <div class="form-group d-flex">
+            {{form.username.label}}
+            {{form.username}}
+          </div>
+          <div class="form-group">
+            {{form.password.label}}
+            {{form.password}}
+          </div>
+
+          <div class="form-errors">
+            {{form.errors}}
+          </div>
+          
+          <div class="d-flex justify-content-center links">
+            Don't have an account?⠀
+            <a href="/signup" class="ml-2">Sign up</a>
+          </div>
+
+          <input type="submit" value="Login" class="w-25 btn btn-primary"/>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+```
+
 - `templates/signup.html`
 
 ```html
@@ -538,3 +581,292 @@ urlpatterns = [
 </div>
 {% endblock %}
 ```
+
+- `static/css/style.css`
+
+```css
+... 
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+```
+
+### 13.6 login, signup page preview
+
+![Login Page Preview](assets/login_page_preview.png)
+![Signup Page Preview](assets/signup_page_preview.png)
+
+## 14. Adding the create post feature
+
+### 14.1 Go to `app/forms.py` and add the following code
+
+```py
+from django import forms
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.models import User
+from app.models import Post
+...
+def createPostForm(request):
+    class CreatePostForm(forms.ModelForm):
+        class Meta:
+            model = Post
+            fields = ['title', 'content']
+    return CreatePostForm(request.POST or None)
+
+```
+
+### 14.2 Go to `app/views.py` and add the following code
+
+```python
+from django.shortcuts import render
+from app.models import Post
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.shortcuts import redirect
+from .forms import SignupForm, LoginForm, createPostForm
+
+def index(request):
+    posts = Post.objects.all()
+    context = {
+        'posts': posts,
+        'isLogin': request.user.is_authenticated,
+        'username': request.user.username if request.user.is_authenticated else '',
+        'form': createPostForm(request)
+    }
+
+    if request.method == 'POST':
+        form = createPostForm(request)
+        if form.is_valid():
+            title = form.cleaned_data.get('title')
+            content = form.cleaned_data.get('content')
+            post = Post(title=title, content=content, author=request.user)
+            post.save()
+            return redirect('/')
+        else:
+            context['form'] = form
+
+    return render(request, 'index.html', context)
+
+...
+```
+
+### 14.3 Go to `index.html` and add the following code
+
+```html
+...
+<div class="card card-create-post m-4 p-3 position-relative">
+	<div class="card-header mb-3">
+		<h5>Welcome {{ username }} !</h5>
+	</div>
+	
+    <div>
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.title.label }}
+                {{ form.title }}
+            </div>
+            <div class="mb-3">
+                {{ form.content.label }}
+                {{ form.content }}
+            </div>
+            <div>
+                {{form.errors}}
+            </div>
+            <button type="submit" class="btn btn-primary mb-3 mt-2">Create</button>
+        </form>
+    </div>
+    ...
+```
+
+## 15 Adding the update post feature
+
+### 15.1 Go to `app/forms.py` and add the following code
+
+```py
+from django import forms
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.models import User
+from app.models import Post
+...
+def updatePostForm(request, post):
+    class UpdatePostForm(forms.ModelForm):
+        class Meta:
+            model = Post
+            fields = ['title', 'content']
+    return UpdatePostForm(request.POST or None, instance=post)
+```
+
+### 15.2 Go to `app/views.py` and add the following code
+
+```python
+from django.shortcuts import render
+from app.models import Post
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.shortcuts import redirect
+from .forms import SignupForm, LoginForm, createPostForm, updatePostForm
+
+...
+
+def updatePost(request, pk):
+    post = Post.objects.get(id=pk)
+    form = updatePostForm(request, post)
+
+    # check if the user is the author of the post
+    if post.author != request.user:
+        return redirect('/', messages.error(request, 'You are not the author of this post'))
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            return redirect('/')
+        else:
+            context = {
+                'form': form,
+                'post': post
+            }
+            return render(request, 'update_post.html', context)
+    else:
+        context = {
+            'form': form,
+            'post': post
+        }
+        return render(request, 'update_post.html', context)
+```
+
+### 15.3 Go to `app/urls.py` and add the following code
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('login/', views.login_view, name='login'),
+    path('signup/', views.signup_view, name='signup'),
+    path('logout/', views.logout_view, name='logout'),
+    path('update_post/<int:pk>/', views.updatePost, name='update_post'),
+]
+```
+
+### 15.4 Go to `templates/update_post.html` and add the following code
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Update Post Page 
+{% endblock %}
+
+{% block content %}
+```
+
+### 15.5 Add update button in `index.html`
+
+```html
+...
+<div class="card-container mb-5">
+    {% for post in posts %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ post.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-body-secondary">{{ post.author }} | {{post.date_posted}}</h6>
+                <p class="card-text">{{ post.content }}</p>
+                </div>
+                {% if post.author == username %}
+                <div class="card-footer">
+                    <a href="/update_post/{{ post.id }}">
+                        <button class="btn btn-primary">Update</button>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+    {% endfor %}
+</div>
+...
+```
+
+## 16. Adding the delete post feature
+
+### 16.1 Go to `app/views.py` and add the following code
+
+```python
+from django.shortcuts import render
+from app.models import Post
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.shortcuts import redirect
+from .forms import SignupForm, LoginForm, createPostForm, updatePostForm
+
+...
+
+def deletePost(request, pk):
+    post = Post.objects.get(id=pk)
+
+    # check if the user is the author of the post
+    if post.author != request.user:
+        return redirect('/', messages.error(request, 'You are not the author of this post'))
+
+    post.delete()
+    return redirect('/')
+```
+
+### 16.2 Go to `app/urls.py` and add the following code
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('login/', views.login_view, name='login'),
+    path('signup/', views.signup_view, name='signup'),
+    path('logout/', views.logout_view, name='logout'),
+    path('update_post/<int:pk>/', views.updatePost, name='update_post'),
+    path('delete_post/<int:pk>/', views.deletePost, name='delete_post'),
+]
+```
+
+### 16.3 Add delete button in `index.html`
+
+- wrap update and delete button in a div with flex, align items center and justify content center
+
+
+```html
+...
+<div class="card-container mb-5">
+    {% for post in posts %}
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ post.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-body-secondary">{{ post.author }} | {{post.date_posted}}</h6>
+                <p class="card-text">{{ post.content }}</p>
+                </div>
+                {% if post.author.username == username %}
+                    <div class="card-footer d-flex align-items-center gap-2">
+                        <a href="/update_post/{{ post.id }}">
+                            <button class="btn btn-primary">Update</button>
+                        </a>
+                        <a href="/delete_post/{{ post.id }}">
+                            <button class="btn btn-danger">Delete</button>
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="card-footer d-flex align-items-center gap-2">
+                        <button class="btn btn-primary" disabled>Update</button>
+                        <button class="btn btn-danger" disabled>Delete</button>
+                    </div>
+                {% endif %}
+            </div>
+    {% endfor %}
+</div>
+...
+```
+
+## Delete and Update Post Preview
+
+![Delete Post Preview](assets/delete_post_preview.png)
+![Post Redirect Preview](assets/post_redirect_preview.png)
+

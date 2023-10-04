@@ -10,18 +10,26 @@
     {% if isLogin %}
     <div class="card card-create-post m-4 p-3 position-relative">
         <div class="card-header mb-3">
-            <h5> Welcome {{ username }} user!</h5>
+            <h5> Welcome {{ username }} !</h5>
         </div>
         <div>
-            <div class="mb-3">
-                <label for="post-title" class="form-label">Title:</label>
-                <input type="text" class="form-control" id="post-title">
-            </div>
-            <div class="mb-3">
-                <label for="post-content" class="form-label">Content:</label>
-                <textarea class="form-control" id="post-content" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary mb-3">Create</button>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="form-group d-flex">
+                    {{ form.title.label }}
+                    {{ form.title }}
+                    <small id="usernameHelp" class="form-text text-muted">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</small>
+                </div>
+                <div class="form-group d-flex">
+                    {{ form.content.label }}
+                    {{ form.content }}
+                    <small id="usernameHelp" class="form-text text-muted">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</small>
+                </div>
+                <div>
+                    {{form.errors}}
+                </div>
+                <button type="submit" class="btn btn-primary mb-3 mt-2">Create</button>
+            </form>
         </div>
     {% else %}
     <div class="card card-create-post m-4 p-3 position-relative">
@@ -47,7 +55,6 @@
     </div>
     {% endif %}
 </div>
-    
     <div class="card-container mb-5">
         {% for post in posts %}
             <div class="card">
@@ -55,6 +62,21 @@
                     <h5 class="card-title">{{ post.title }}</h5>
                     <h6 class="card-subtitle mb-2 text-body-secondary">{{ post.author }} | {{post.date_posted}}</h6>
                     <p class="card-text">{{ post.content }}</p>
+                    {% if post.author.username == username %}
+                    <div class="card-footer d-flex align-items-center gap-2">
+                        <a href="/update_post/{{ post.id }}">
+                            <button class="btn btn-primary">Update</button>
+                        </a>
+                        <a href="/delete_post/{{ post.id }}">
+                            <button class="btn btn-danger">Delete</button>
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="card-footer d-flex align-items-center gap-2">
+                        <button class="btn btn-primary" disabled>Update</button>
+                        <button class="btn btn-danger" disabled>Delete</button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
