@@ -4,9 +4,19 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.shortcuts import redirect
 from .forms import SignupForm, LoginForm, createPostForm, updatePostForm
+import pytz
+import datetime
 
 def index(request):
     posts = Post.objects.all()
+
+    # change all post times to standard IST time
+    for post in posts:
+        dateObj = datetime.datetime.strptime(post.date_posted.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
+        dateObj = dateObj.replace(tzinfo=pytz.UTC)
+        dateObj = dateObj.astimezone(pytz.timezone('Asia/Kolkata'))
+        post.date_posted = dateObj.strftime('%-d %b %I:%M %p')
+    
     context = {
         'posts': posts,
         'isLogin': request.user.is_authenticated,
