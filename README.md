@@ -161,33 +161,48 @@ admin.site.register(Comment)
 		<link rel="stylesheet" href="{% static 'css/style.css' %}" />
 	</head>
 	<body>
-		<nav class="navbar navbar-expand-lg bg-primary sticky-top" data-bs-theme="dark">
+		<nav
+			class="navbar navbar-expand-lg bg-primary sticky-top"
+			data-bs-theme="dark"
+		>
 			<div class="container-fluid">
 				<a class="navbar-brand" href="/">Chirp</a>
-				<button
-					class="navbar-toggler"
-					type="button"
-					data-bs-toggle="collapse"
-					data-bs-target="#navbarNavAltMarkup"
-					aria-controls="navbarNavAltMarkup"
-					aria-expanded="false"
-					aria-label="Toggle navigation"
-				>
-					<span class="navbar-toggler-icon"></span>
-				</button>
-				<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-					<div class="navbar-nav">
-						{% if isLogin %}
+				<div class="d-flex gap-3">
+					<button
+						class="navbar-toggler"
+						type="button"
+						data-bs-toggle="collapse"
+						data-bs-target="#navbarNavAltMarkup"
+						aria-controls="navbarNavAltMarkup"
+						aria-expanded="false"
+						aria-label="Toggle navigation"
+					>
+						<span class="navbar-toggler-icon"></span>
+					</button>
+					<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+						<div class="navbar-nav">
+							{% if isLogin %}
 							<a class="nav-link active" href="/">Profile</a>
 							<a class="nav-link active" href="/">My Posts</a>
+							{% endif %}
+						</div>
+					</div>
+					<div>
+						{% if isLogin %}
+						<a href="login/"
+							><button class="btn btn-light" type="button">
+								Log out
+							</button></a
+						>
+						{% else %}
+						<a href="signup/"
+							><button class="btn btn-light" type="button">
+								Sign up
+							</button></a
+						>
 						{% endif %}
 					</div>
-				</div>
-				{% if isLogin %}
-					<button class="btn btn-light ml-auto" type="button">Log out</button>
-				{% else %}
-					<button class="btn btn-light ml-auto" type="button">Sign up</button>
-				{% endif %}
+					</div>
 			</div>
 		</nav>
 		<main id="content">{% block content %} {% endblock %}</main>
@@ -372,15 +387,40 @@ urlpatterns = [
 {% block content %}
 ```
 
+### 13.3 Go to `app/forms.py` and add the following code
+
+```py
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+
+class SignupForm(UserCreationForm):
+    class Meta: 
+        model = User
+        fields = ['username', 'email', 'password1', 'password2']
+```
+
 ### 13.3 Go to `app/views.py` and add the following code
 
 ```python
+from django.shortcuts import render
+from app.models import Post
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.shortcuts import redirect
+from .forms import SignupForm
 
 ...
+
+def index(request):
+    posts = Post.objects.all()
+    context = {
+        'posts': posts,
+        'isLogin': request.user.is_authenticated,
+        'username': request.user.username if request.user.is_authenticated else ''
+    }
+    return render(request, 'index.html', context)
 
 def login_view(request):
     if request.method == 'POST':
@@ -397,20 +437,21 @@ def login_view(request):
         return render(request, 'login.html')
 
 def signup_view(request):
+    form = SignupForm()
+    
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        email = request.POST['email']
-        try:
-            user = User.objects.create_user(username, email, password)
-            user.save()
-            messages.success(request, 'Account created successfully')
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            form.save()
+            user = form.cleaned_data.get('username')
+            messages.success(request, 'Account was created for ' + user)
             return redirect('/login')
-        except:
-            messages.error(request, 'Account creation failed')
-            return redirect('/signup')
-    else:
-        return render(request, 'signup.html')
+
+    context = {
+        'form': form
+    }
+    return render(request, 'signup.html', context)
+            
 
 def logout_view(request):
     logout(request)
@@ -431,3 +472,59 @@ urlpatterns = [
 ]
 ```
 
+### 13.5 Add the following templates: 
+
+- `templates/login.html`
+
+- `templates/signup.html`
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Signup Page 
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid h-100">
+  <div class="row h-100 justify-content-center align-items-center">
+    <div class="col-md-6 my-auto">
+      <form method="POST" action="" class="card mt-5">
+        {% csrf_token %}
+        <div class="card-header">
+          <h3>Sign up</h3>
+        </div>
+        <div class="card-body d-flex flex-column gap-3">
+          <div class="form-group d-flex">
+            {{form.username.label}}
+            {{form.username}}
+            <small id="usernameHelp" class="form-text text-muted">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</small>
+          </div>
+          <div class="form-group">
+            {{form.email.label}}
+            {{form.email}}
+            <small id="emailHelp" class="form-text text-muted">Enter a valid email address.</small>
+          </div>
+          <div class="form-group">
+            {{form.password1.label}}
+            {{form.password1}}
+            <small id="passwordHelp" class="form-text text-muted">Your password can’t be too similar to your other personal information.</small>
+          </div>
+          <div class="form-group">
+            {{form.password2.label}}
+            {{form.password2}}
+            <small id="passwordHelp" class="form-text text-muted">Enter the same password as before, for verification.</small>
+          </div>
+
+          <div class="form-errors">
+            {{form.errors}}
+          </div>
+          
+          <input type="submit" value="Sign up" class="w-25 btn btn-primary"/>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+```

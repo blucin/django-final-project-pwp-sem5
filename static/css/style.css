@@ -37,3 +37,8 @@
   gap: 1em;
   padding: 0 1em;
 }
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}

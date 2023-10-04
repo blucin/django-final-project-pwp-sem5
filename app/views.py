@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.shortcuts import redirect
+from .forms import SignupForm
 
 def index(request):
     posts = Post.objects.all()
@@ -29,20 +30,21 @@ def login_view(request):
         return render(request, 'login.html')
 
 def signup_view(request):
+    form = SignupForm()
+    
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        email = request.POST['email']
-        try:
-            user = User.objects.create_user(username, email, password)
-            user.save()
-            messages.success(request, 'Account created successfully')
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            form.save()
+            user = form.cleaned_data.get('username')
+            messages.success(request, 'Account was created for ' + user)
             return redirect('/login')
-        except:
-            messages.error(request, 'Account creation failed')
-            return redirect('/signup')
-    else:
-        return render(request, 'signup.html')
+
+    context = {
+        'form': form
+    }
+    return render(request, 'signup.html', context)
+            
 
 def logout_view(request):
     logout(request)
