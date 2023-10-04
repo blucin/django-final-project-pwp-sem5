@@ -2,11 +2,7 @@
   "builds": [{
     "src": "project/wsgi.py",
     "use": "@vercel/python",
-    "config": { "maxLambdaSize": "15mb" , "runtime": "python3.11" },
-    "env": {
-      "PIP_VERSION": "20.3.4"
-    },
-    "command": "python -m ensurepip && python -m pip install --upgrade pip==$PIP_VERSION && python -m pip install -r requirements.txt"
+    "config": { "maxLambdaSize": "15mb" , "runtime": "python3.11" }
   }],
   "routes": [
     { "src": "/(.*)", "dest": "project/wsgi.py" }
