@@ -8,7 +8,21 @@
 
 <div class="login-status">
     {% if isLogin %}
-        <a>Log Out</a>
+    <div class="card card-create-post m-4 p-3 position-relative">
+        <div class="card-header mb-3">
+            <h5> Welcome {{ username }} user!</h5>
+        </div>
+        <div>
+            <div class="mb-3">
+                <label for="post-title" class="form-label">Title:</label>
+                <input type="text" class="form-control" id="post-title">
+            </div>
+            <div class="mb-3">
+                <label for="post-content" class="form-label">Content:</label>
+                <textarea class="form-control" id="post-content" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary mb-3">Create</button>
+        </div>
     {% else %}
     <div class="card card-create-post m-4 p-3 position-relative">
         <div class="card-blur-elements">
@@ -34,7 +48,7 @@
     {% endif %}
 </div>
     
-    <div class="card-container">
+    <div class="card-container mb-5">
         {% for post in posts %}
             <div class="card">
                 <div class="card-body">

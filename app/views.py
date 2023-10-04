@@ -1,10 +1,9 @@
 from django.shortcuts import render
 from app.models import Post
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
 from django.contrib import messages
 from django.shortcuts import redirect
-from .forms import SignupForm
+from .forms import SignupForm, LoginForm
 
 def index(request):
     posts = Post.objects.all()
@@ -16,22 +15,26 @@ def index(request):
     return render(request, 'index.html', context)
 
 def login_view(request):
+    form = LoginForm()
+
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request,
+                            username=username,
+                            password=password)
         if user is not None:
             login(request, user)
             return redirect('/')
-        else:
-            messages.error(request, 'Invalid Credentials')
-            return redirect('/login')
-    else:
-        return render(request, 'login.html')
+
+    context = {
+        'form': form
+    }
+    return render(request, 'login.html', context)
 
 def signup_view(request):
     form = SignupForm()
-    
+
     if request.method == 'POST':
         form = SignupForm(request.POST)
         if form.is_valid():

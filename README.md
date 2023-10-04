@@ -167,42 +167,31 @@ admin.site.register(Comment)
 		>
 			<div class="container-fluid">
 				<a class="navbar-brand" href="/">Chirp</a>
-				<div class="d-flex gap-3">
-					<button
-						class="navbar-toggler"
-						type="button"
-						data-bs-toggle="collapse"
-						data-bs-target="#navbarNavAltMarkup"
-						aria-controls="navbarNavAltMarkup"
-						aria-expanded="false"
-						aria-label="Toggle navigation"
-					>
-						<span class="navbar-toggler-icon"></span>
-					</button>
-					<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-						<div class="navbar-nav">
-							{% if isLogin %}
-							<a class="nav-link active" href="/">Profile</a>
-							<a class="nav-link active" href="/">My Posts</a>
-							{% endif %}
-						</div>
+				{% if not isLogin %}
+				<a href="signup/"
+					><button class="btn btn-light" type="button">
+						Sign up
+					</button></a
+				>
+				{% else %}
+				<button
+					class="navbar-toggler"
+					type="button"
+					data-bs-toggle="collapse"
+					data-bs-target="#navbarNavAltMarkup"
+					aria-controls="navbarNavAltMarkup"
+					aria-expanded="false"
+					aria-label="Toggle navigation"
+				>
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+					<div class="navbar-nav">
+						<a class="nav-link active" href="/">Profile</a>
+						<a class="nav-link active" href="/">My Posts</a>
 					</div>
-					<div>
-						{% if isLogin %}
-						<a href="login/"
-							><button class="btn btn-light" type="button">
-								Log out
-							</button></a
-						>
-						{% else %}
-						<a href="signup/"
-							><button class="btn btn-light" type="button">
-								Sign up
-							</button></a
-						>
-						{% endif %}
-					</div>
-					</div>
+				</div>
+				{% endif %}
 			</div>
 		</nav>
 		<main id="content">{% block content %} {% endblock %}</main>
@@ -398,6 +387,11 @@ class SignupForm(UserCreationForm):
     class Meta: 
         model = User
         fields = ['username', 'email', 'password1', 'password2']
+
+class LoginForm(AuthenticationForm):
+    class Meta:
+        model = User
+        fields = ['username', 'password']
 ```
 
 ### 13.3 Go to `app/views.py` and add the following code
