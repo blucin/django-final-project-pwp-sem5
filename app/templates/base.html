@@ -13,6 +13,52 @@
 		/>
 		<link rel="stylesheet" href="{% static 'css/style.css' %}" />
 	</head>
+	<style>
+			@media(min-width: 50em) {
+			main {
+				padding-left: 5em;
+				padding-right: 5em;
+			}
+
+			.card-container {
+				gap: 2em;
+			}
+		}
+
+		/* index page */
+		.card-create-post-container {
+			position: absolute;
+			top: 0;
+			left: 0;
+			z-index: -1;
+			
+		}
+
+		.card-blur-elements {
+			filter: blur(2px);
+		}
+
+		.card-create-post {
+			position: relative;
+			z-index: 1;
+		}
+
+		.card-create-post-container .card.position-absolute {
+			z-index: 2;
+		}
+
+		.card-container {
+			display: flex;
+			flex-direction: column;
+			gap: 1em;
+			padding: 0 1em;
+		}
+
+		.form-group {
+			display: flex;
+			flex-direction: column;
+		}
+	</style>
 	<body>
 		<nav
 			class="navbar navbar-expand-lg bg-primary sticky-top"
