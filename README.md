@@ -6,6 +6,8 @@
 % date: October 04, 2023
 -->
 
+![Index Page Preview](assets/index_page_preview.png)
+
 ## 1. Setting up venv 
 
 - Enter the following command based on your shell to create a virtual environment named .venv in the current directory
