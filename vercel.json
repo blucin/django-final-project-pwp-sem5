@@ -5,6 +5,10 @@
     "config": { "maxLambdaSize": "15mb" , "runtime": "python3.11" }
   }],
   "routes": [
+    { "src": "/static/(.*)", "dest": "static/$1" },
     { "src": "/(.*)", "dest": "project/wsgi.py" }
-  ]
+  ],
+  "static": {
+    "directory": "static"
+  }
 }
