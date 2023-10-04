@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %} 
+    Index Page 
+{% endblock %}
+
+{% block content %}
+
+<div class="login-status">
+    {% if isLogin %}
+        <a>Log Out</a>
+    {% else %}
+    <div class="card card-create-post m-4 p-3 position-relative">
+        <div class="card-blur-elements">
+            <div class="mb-3">
+                <label for="post-title" class="form-label">Title:</label>
+                <input type="text" class="form-control" id="post-title" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="post-content" class="form-label">Content:</label>
+                <textarea class="form-control" id="post-content" rows="3" disabled></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary mb-3" disabled>Create</button>
+        </div>
+        <div class="card position-absolute top-50 start-50 translate-middle card-please-login">
+            <div class="card-body">
+                <p class="card-text">Please login to create a post</p>
+                <a href="/login">
+                    <button class="btn btn-primary create-post-login-btn">Login</button>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+    
+    <div class="card-container">
+        {% for post in posts %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ post.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-body-secondary">{{ post.author }} | {{post.date_posted}}</h6>
+                    <p class="card-text">{{ post.content }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}

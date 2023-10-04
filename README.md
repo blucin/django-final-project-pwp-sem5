@@ -43,14 +43,25 @@ django-admin startproject project .
 python manage.py startapp app
 ```
 
-## 5. Start a supabase project
+## 5. Register the app in `project/settings.py`
+
+- Go to `project/settings.py` and add the following line in the `INSTALLED_APPS` list
+
+```python
+INSTALLED_APPS = [
+    ...
+    'app.apps',
+]
+```
+
+## 6. Start a supabase project
 
 - Create a supabase project to use their postgres database.
 
 ![Creating a supabase project](assets/supabase_creating_project.png)
 
 
-## 6. Change project `settings.py` file
+## 7. Change project `settings.py` file
 
 - Your .env format should be like this
 
@@ -83,7 +94,7 @@ DATABASES = {
 ...
 ```
 
-## 7. Migrate the database
+## 8. Migrate the database
 
 - Run the following command to migrate the database
 
@@ -91,3 +102,332 @@ DATABASES = {
 python manage.py makemigrations
 python manage.py migrate
 ```
+
+## 9. Go to `app/models.py` and create the following models
+
+```python
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+
+# User: inbuilt model
+
+class Post(models.Model):
+    content = models.TextField()
+    date_posted = models.DateTimeField(default=timezone.now)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.content
+
+class Comment(models.Model):
+    content = models.TextField()
+    date_posted = models.DateTimeField(default=timezone.now)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.content
+``` 
+
+## 10. Go to `app/admin.py` and register the models
+
+```python
+from django.contrib import admin
+from app.models import Post, Comment
+
+admin.site.register(Post)
+admin.site.register(Comment)
+```
+
+## 11. Make a folder named `templates` in the app folder and add `base.html` in it
+
+- We are going to add bootstrap to our project so we need to add the following code in the `base.html` file
+
+```html
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Chirp</title>
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+			integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+			crossorigin="anonymous"
+		/>
+		<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+	</head>
+	<body>
+		<nav class="navbar navbar-expand-lg bg-primary sticky-top" data-bs-theme="dark">
+			<div class="container-fluid">
+				<a class="navbar-brand" href="/">Chirp</a>
+				<button
+					class="navbar-toggler"
+					type="button"
+					data-bs-toggle="collapse"
+					data-bs-target="#navbarNavAltMarkup"
+					aria-controls="navbarNavAltMarkup"
+					aria-expanded="false"
+					aria-label="Toggle navigation"
+				>
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+					<div class="navbar-nav">
+						{% if isLogin %}
+							<a class="nav-link active" href="/">Profile</a>
+							<a class="nav-link active" href="/">My Posts</a>
+						{% endif %}
+					</div>
+				</div>
+				{% if isLogin %}
+					<button class="btn btn-light ml-auto" type="button">Log out</button>
+				{% else %}
+					<button class="btn btn-light ml-auto" type="button">Sign up</button>
+				{% endif %}
+			</div>
+		</nav>
+		<main id="content">{% block content %} {% endblock %}</main>
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+			integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+			crossorigin="anonymous"
+		></script>
+	</body>
+</html>
+```
+
+## 12. Adding the index page feature
+
+### 12.1 Go to `templates/index.html` and add the following code
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Index Page 
+{% endblock %}
+
+{% block content %}
+
+<div class="login-status">
+    {% if isLogin %}
+        <a>Log Out</a>
+    {% else %}
+    <div class="card card-create-post m-4 p-3 position-relative">
+        <div class="card-blur-elements">
+            <div class="mb-3">
+                <label for="post-title" class="form-label">Title:</label>
+                <input type="text" class="form-control" id="post-title" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="post-content" class="form-label">Content:</label>
+                <textarea class="form-control" id="post-content" rows="3" disabled></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary mb-3" disabled>Create</button>
+        </div>
+        <div class="card position-absolute top-50 start-50 translate-middle card-please-login">
+            <div class="card-body">
+                <p class="card-text">Please login to create a post</p>
+                <button class="btn btn-primary create-post-login-btn">Login</button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+    
+    <div class="card-container">
+        {% for post in posts %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ post.title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-body-secondary">{{ post.author }} | {{post.date_posted}}</h6>
+                    <p class="card-text">{{ post.content }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}
+```
+
+### 12.2. Go to `app/views.py` and add the following code
+
+```python
+from django.shortcuts import render
+from app.models import Post
+
+def index(request):
+    posts = Post.objects.all()
+    context = {
+        'posts': posts,
+        'isLogin': request.user.is_authenticated,
+        'username': request.user.username if request.user.is_authenticated else ''
+    }
+    return render(request, 'index.html', context)
+```
+
+### 12.3. Go to `app/urls.py` and add the following code
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+]
+```
+
+### 12.4. Go to `project/urls.py` and add the following code
+
+```python
+from django.contrib import admin
+from django.urls import path, include
+from django.conf.urls.static import static
+from django.conf import settings
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('app.urls'), name='app'),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+```
+
+### 12.4 Create a folder named `static` in the app folder and add `css/style.css` in it
+
+```css
+@media(min-width: 50em) {
+  main {
+    padding-left: 5em;
+    padding-right: 5em;
+  }
+
+  .card-container {
+    gap: 2em;
+  }
+}
+
+/* index page */
+.card-create-post-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  
+}
+
+.card-blur-elements {
+  filter: blur(2px);
+}
+
+.card-create-post {
+  position: relative;
+  z-index: 1;
+}
+
+.card-create-post-container .card.position-absolute {
+  z-index: 2;
+}
+
+.card-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  padding: 0 1em;
+}
+```
+
+### Index Page Preview
+
+- Create dummy posts on supabase and you will see the following page
+
+![Index Page Preview](assets/index_page_preview.png)
+
+
+## 13. Adding the login page, logout, signup feature
+
+### 13.1 Go to `templates/login.html` and add the following code
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Login Page 
+{% endblock %}
+
+{% block content %}
+```
+
+### 13.2 Go to `templates/signup.html` and add the following code
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Signup Page 
+{% endblock %}
+
+{% block content %}
+```
+
+### 13.3 Go to `app/views.py` and add the following code
+
+```python
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.shortcuts import redirect
+
+...
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('/')
+        else:
+            messages.error(request, 'Invalid Credentials')
+            return redirect('/login')
+    else:
+        return render(request, 'login.html')
+
+def signup_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        email = request.POST['email']
+        try:
+            user = User.objects.create_user(username, email, password)
+            user.save()
+            messages.success(request, 'Account created successfully')
+            return redirect('/login')
+        except:
+            messages.error(request, 'Account creation failed')
+            return redirect('/signup')
+    else:
+        return render(request, 'signup.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('/')
+```
+
+### 13.4 Go to `app/urls.py` and add the following code
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('login/', views.login_view, name='login'),
+    path('signup/', views.signup_view, name='signup'),
+    path('logout/', views.logout_view, name='logout'),
+]
+```
+
