@@ -93,27 +93,3 @@ Follow these instructions to get your project up and running.
 9. **Access the application:**
 
    - Open your browser and go to `http://127.0.0.1:8000/` to see the application in action.
-
-## Tech Stack
-
-- **Backend:** Django
-- **Database:** PostgreSQL (via Supabase)
-- **Frontend:** HTML, CSS (Bootstrap), JavaScript
-- **Authentication:** Django's built-in authentication system
-- **Environment Management:** Python Decouple for environment variables
-- **Virtual Environment:** venv
-
-## Contributing
-
-Feel free to fork the repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
-
-## License
-
-This project is licensed under the MIT License.
-
-## Acknowledgments
-
-- Inspiration and guidance from various Django tutorials and documentation.
-- Supabase for providing a seamless PostgreSQL database experience.
-
-Happy coding! 🚀
